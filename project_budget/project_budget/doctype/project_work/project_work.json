@@ -15,7 +15,8 @@
   "section_break_aowz",
   "task",
   "create_task_button",
-  "project_budget"
+  "project_budget",
+  "index"
  ],
  "fields": [
   {
@@ -73,11 +74,18 @@
    "fieldtype": "Link",
    "label": "Project Budget",
    "options": "Project Budget"
+  },
+  {
+   "fieldname": "index",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Work Order",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-04 12:01:31.277708",
+ "modified": "2024-04-16 12:24:14.912539",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Work",

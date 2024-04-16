@@ -4,7 +4,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         this.events = events;
         this.settings = settings
         this.$project_works_index = 0
-        this[`project-works-items`] = []
+        this['project-works-items'] = []
         this['project-budget'] = {}
 
         this.init_component();
@@ -36,7 +36,8 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             </div>
             <div class="project-works-container">
             </div>
-                <div class="add-works-button">Add Project Works</div>
+
+            <div class="add-works-button">Add Project Works</div>
             </div>`
         )
 
@@ -95,13 +96,12 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         )
         let project_works_item = this.$project_works.find(`.project-works-item-${index_work}`)
 
-        let me = this
-        if (this[`project-works-items`][index_work] == undefined) this['project-works-items'][index_work] = {}
         await this.make_project_work_frm(index_work)
+        // if (this[`project-works-items`][index_work]["control"] == undefined) this['project-works-items'][index_work]["control"] = {}
+
         if (this.work_meta == undefined) this.work_meta = await frappe.get_meta("Project Work")
 
-        let cur_child_frm = this['project-works-items'][index_work]['frm'];
-        let cur_index = this['project-works-items'][index_work]
+        let cur_works_frm = this['project-works-items'][index_work]
 
         const field_to_display = this.get_form_fields("Project Work")
         field_to_display.forEach((fieldname, index_detail) => {
@@ -116,50 +116,68 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             if (field_meta.fieldtype == "Table") {
                 field_meta.fields = this.get_table_fields(fieldname);
                 field_meta.data = [];
-                make_meta["frm"] = cur_child_frm;
+                make_meta["frm"] = cur_works_frm;
             }
-            cur_index[`${fieldname}_control`] = frappe.ui.form.make_control({
+
+            cur_works_frm[`${fieldname}_control`] = frappe.ui.form.make_control({
                 df: {
                     ...field_meta,
                     onchange: function () {
-                        let value = cur_index[`${fieldname}_control`].get_value();
-                        cur_child_frm.set_value(fieldname, value);
+                        let value = cur_works_frm[`${fieldname}_control`].get_value();
+                        cur_works_frm.set_value(fieldname, value);
                     },
                 },
                 ...make_meta,
                 parent: project_works_item.find(`.${fieldname}-control`),
                 render_input: true,
             });
-            cur_index[`${fieldname}_control`].set_value(cur_child_frm.doc[fieldname]);
+            cur_works_frm[`${fieldname}_control`].set_value(cur_works_frm.doc[fieldname]);
         })
 
-        this.create_filter_child_table(cur_index["work_item_detail_control"], index_work)
-        this.create_trigger_child_table(cur_index["work_item_detail_control"], index_work)
+        this.fill_index_work_order(cur_works_frm, index_work)
+        this.create_field_filter_child_table(cur_works_frm["work_item_detail_control"], index_work)
+        this.create_field_trigger_child_table(cur_works_frm["work_item_detail_control"], index_work)
 
         this.$project_works_index++
     }
 
-    create_trigger_child_table(tableControl, index) {
-        tableControl.grid.fields_map.item_price.onchange = function (event) {
-            console.log(event)
+    fill_index_work_order(frm, index) {
+        frm.set_value("index", index)
+        frm["index_control"].set_value(index)
+    }
+
+    create_field_trigger_child_table(tableControl, index) {
+        tableControl.grid.fields_map.item_price.onchange = async function (event, value) {
+            let result = await frappe.db.get_value("Item Price", this.doc.item_price, "price_list_rate")
+            this.doc.price = result.message.price_list_rate
+            this.frm.work_item_detail_control.refresh()
+            // trigger on change price
+            let price_df = this.frm.work_item_detail_control.grid.fields_map.price
+            price_df.onchange.apply(this)
         }
 
-        tableControl.grid.fields_map.price.onchange = function (event, value) {
+        tableControl.grid.fields_map.price.onchange = async function (event, value) {
+            // this.doc ==> is a project work detail (already dynamic)
             if (this.doc.quantity == undefined) return;
+            // let old_price = this.doc.total_price
             this.doc.total_price = this.doc.price * this.doc.quantity
-            this.frm.refresh_fields("work_item_detail")
-            debugger
-            let index_work = this.parent("workindex")
-            this['project-works-items'][index_work][`total_price_control`].set_value(this.doc.total_price)
+            this.frm.work_item_detail_control.refresh()
 
+            // // update project works subtotal ?
+            // this.frm.doc.total_price = this.frm.doc.total_price - old_price + this.doc.total_price
+            // debugger
+            // this.frm.total_price_control.set_value(this.frm.doc.total_price)
+            // this.frm.total_price_control.refresh()
         }
-        tableControl.grid.fields_map.quantity.onchange = function (event) {
-            console.log(event)
 
+        tableControl.grid.fields_map.quantity.onchange = function (event) {
+            if (this.doc.price == undefined) return;
+            this.doc.total_price = this.doc.price * this.doc.quantity
+            this.frm.work_item_detail_control.refresh()
         }
     }
 
-    create_filter_child_table(tableControl, index) {
+    create_field_filter_child_table(tableControl, index) {
         tableControl.grid.get_field("item").get_query = function (doc, dct, cdn) {
             return {
                 filters: {
@@ -182,30 +200,12 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     make_project_work_frm(index) {
         const doctype = "Project Work"
         return new Promise((resolve) => {
-            if (this['project-works-items'][index]['frm']) {
-                this['project-works-items'][index]['frm'] = this.get_new_frm(this['project-works-items'][index]['frm'])
+            if (this['project-works-items'][index]) {
+                this['project-works-items'][index] = this.get_new_frm(this['project-works-items'][index])
                 resolve()
             } else {
                 frappe.model.with_doctype(doctype, () => {
-                    this['project-works-items'][index]['frm'] = this.get_new_frm()
-                    resolve()
-                })
-            }
-        })
-    }
-
-    make_project_detail_frm(index_work, index_detail) {
-        const doctype = "Project Work Detail"
-        if (this['project-works-items'][index_work]['work_item_detail_frm'] == undefined) {
-            this['project-works-items'][index_work]['work_item_detail_frm'] = {}
-        }
-        return new Promise((resolve) => {
-            if (this['project-works-items'][index_work]['work_item_detail_frm'][index_detail]) {
-                this['project-works-items'][index_work]['work_item_detail_frm'][index_detail] = this.get_new_frm(this['project-works-items'][index_work]['work_item_detail_frm'][index_detail])
-                resolve()
-            } else {
-                frappe.model.with_doctype(doctype, () => {
-                    this['project-works-items'][index_work]['work_item_detail_frm'][index_detail] = this.get_new_frm()
+                    this['project-works-items'][index] = this.get_new_frm()
                     resolve()
                 })
             }
@@ -279,7 +279,8 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 "volume",
                 "unit_of_measurement",
                 "work_item_detail",
-                "total_price"
+                "total_price",
+                "index"
             ]
 
         return fields
