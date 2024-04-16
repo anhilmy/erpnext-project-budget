@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 14:54:18.589586",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "estimate_total",
+  "volume",
+  "uom"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Title",
+   "options": "Project Work"
+  },
+  {
+   "fetch_from": "title.total_price",
+   "fetch_if_empty": 1,
+   "fieldname": "estimate_total",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Estimate Total"
+  },
+  {
+   "fetch_from": "title.volume",
+   "fetch_if_empty": 1,
+   "fieldname": "volume",
+   "fieldtype": "Int",
+   "label": "Volume"
+  },
+  {
+   "fetch_from": "title.unit_of_measurement",
+   "fetch_if_empty": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "Unit of Measurement",
+   "options": "UOM"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-03-28 15:04:54.034368",
+ "modified_by": "Administrator",
+ "module": "Project Budget",
+ "name": "Project Budget Work",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

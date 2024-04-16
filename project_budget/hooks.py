@@ -11,7 +11,7 @@ app_license = "apache-2.0"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/project_budget/css/project_budget.css"
-# app_include_js = "/assets/project_budget/js/project_budget.js"
+# app_include_js = "/assets/project_budget/js/project_budget.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/project_budget/css/project_budget.css"

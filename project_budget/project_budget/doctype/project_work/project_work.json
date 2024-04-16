@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2024-03-28 13:30:26.169607",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "work_title",
+  "volume",
+  "unit_of_measurement",
+  "work_item_detail",
+  "total_price",
+  "section_break_aowz",
+  "task",
+  "create_task_button",
+  "project_budget"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "work_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Work Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "work_item_detail",
+   "fieldtype": "Table",
+   "label": "Work Item Detail",
+   "options": "Project Work Detail"
+  },
+  {
+   "columns": 1,
+   "fieldname": "volume",
+   "fieldtype": "Int",
+   "label": "Volume"
+  },
+  {
+   "columns": 1,
+   "fieldname": "unit_of_measurement",
+   "fieldtype": "Link",
+   "label": "Unit of Measurement",
+   "options": "UOM"
+  },
+  {
+   "columns": 3,
+   "fieldname": "total_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Subtotal Estimated Price",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Task",
+   "options": "Task"
+  },
+  {
+   "fieldname": "section_break_aowz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "create_task_button",
+   "fieldtype": "Button",
+   "label": "Create Task"
+  },
+  {
+   "fieldname": "project_budget",
+   "fieldtype": "Link",
+   "label": "Project Budget",
+   "options": "Project Budget"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-04-04 12:01:31.277708",
+ "modified_by": "Administrator",
+ "module": "Project Budget",
+ "name": "Project Work",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

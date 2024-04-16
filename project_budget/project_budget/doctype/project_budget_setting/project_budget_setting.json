@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-28 14:19:42.054065",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_price_section",
+  "default_item_price_list"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_price_section",
+   "fieldtype": "Section Break",
+   "label": "Item Price"
+  },
+  {
+   "fieldname": "default_item_price_list",
+   "fieldtype": "Link",
+   "label": "Default Item Price List",
+   "options": "Price List"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-03-28 14:20:52.670759",
+ "modified_by": "Administrator",
+ "module": "Project Budget",
+ "name": "Project Budget Setting",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

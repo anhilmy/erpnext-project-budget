@@ -1,0 +1,20 @@
+{
+ "content": null,
+ "creation": "2024-04-01 09:46:34.818638",
+ "docstatus": 0,
+ "doctype": "Page",
+ "icon": "pivot-column",
+ "idx": 0,
+ "modified": "2024-04-01 09:47:26.059956",
+ "modified_by": "Administrator",
+ "module": "Project Budget",
+ "name": "project-budget-show",
+ "owner": "Administrator",
+ "page_name": "project-budget-show",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Project Budget"
+}
