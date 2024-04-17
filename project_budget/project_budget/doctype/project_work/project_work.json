@@ -7,16 +7,18 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_break_aowz",
+  "project_budget",
+  "index",
+  "column_break_mgde",
+  "task",
+  "create_task_button",
+  "section_break_eiqq",
   "work_title",
   "volume",
   "unit_of_measurement",
   "work_item_detail",
-  "total_price",
-  "section_break_aowz",
-  "task",
-  "create_task_button",
-  "project_budget",
-  "index"
+  "total_price"
  ],
  "fields": [
   {
@@ -73,7 +75,8 @@
    "fieldname": "project_budget",
    "fieldtype": "Link",
    "label": "Project Budget",
-   "options": "Project Budget"
+   "options": "Project Budget",
+   "read_only": 1
   },
   {
    "fieldname": "index",
@@ -81,11 +84,19 @@
    "hidden": 1,
    "label": "Work Order",
    "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_mgde",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_eiqq",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-16 12:24:14.912539",
+ "modified": "2024-04-17 12:54:28.756345",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Work",

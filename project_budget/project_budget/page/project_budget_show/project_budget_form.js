@@ -75,8 +75,20 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             this['project-budget'][`${fieldname}_control`] = frappe.ui.form.make_control({
                 df: {
                     ...field_meta,
-                    onchange: function () {
+                    onchange: async function () {
                         me.events.get_frm().set_value(fieldname, me['project-budget'][`${fieldname}_control`].get_value())
+
+                        if (fieldname == "project") {
+                            let project_name_control = me['project-budget'][`project_name_control`]
+                            let frm = me.events.get_frm()
+                            if (project_name_control.get_value() == "") {
+                                let result = await frappe.db.get_value("Project", frm.doc.project, "project_name")
+                                let project_name = result.message.project_name
+                                frm.set_value("project_name", project_name)
+                                project_name_control.set_value(project_name)
+                                project_name_control.refresh()
+                            }
+                        }
                     },
                 },
                 parent: this.$form_container.find(`.${fieldname}-control`),
@@ -156,23 +168,26 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             price_df.onchange.apply(this)
         }
 
-        tableControl.grid.fields_map.price.onchange = async function (event, value) {
+        tableControl.grid.fields_map.price.onchange = function (event, value) {
             // this.doc ==> is a project work detail (already dynamic)
             if (this.doc.quantity == undefined) return;
-            // let old_price = this.doc.total_price
-            this.doc.total_price = this.doc.price * this.doc.quantity
-            this.frm.work_item_detail_control.refresh()
 
-            // // update project works subtotal ?
-            // this.frm.doc.total_price = this.frm.doc.total_price - old_price + this.doc.total_price
-            // debugger
-            // this.frm.total_price_control.set_value(this.frm.doc.total_price)
-            // this.frm.total_price_control.refresh()
+            this.doc.total_price = this.doc.price * this.doc.rounded_quantity
+            this.frm.work_item_detail_control.refresh()
         }
 
-        tableControl.grid.fields_map.quantity.onchange = function (event) {
+        tableControl.grid.fields_map.quantity.onchange = async function (event) {
             if (this.doc.price == undefined) return;
-            this.doc.total_price = this.doc.price * this.doc.quantity
+
+            let uom_whole = await frappe.db.get_value("UOM", this.doc.unit_of_measurement, "must_be_whole_number")
+            uom_whole = uom_whole.message.must_be_whole_number
+            if (uom_whole == 1) {
+                this.doc.rounded_quantity = Math.ceil(this.doc.quantity)
+            } else {
+                this.doc.rounded_quantity = this.doc.quantity
+            }
+
+            this.doc.total_price = this.doc.price * this.doc.rounded_quantity
             this.frm.work_item_detail_control.refresh()
         }
     }
@@ -269,8 +284,8 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
         if (doctype == "Project Budget")
             fields = [
-                "project_name",
                 "project",
+                "project_name",
                 "total_estimated_cost"
             ]
         else if (doctype == "Project Work")
