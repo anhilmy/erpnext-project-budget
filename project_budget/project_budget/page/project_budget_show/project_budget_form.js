@@ -204,8 +204,11 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             this.doc.price = result.message.price_list_rate
             this.frm.control.work_item_detail_control.refresh()
             // trigger on change price
-            let price_df = this.frm.control.work_item_detail_control.grid.fields_map.price
-            price_df.onchange.apply(this)
+            let fields_map = this.frm.control.work_item_detail_control.grid.fields_map
+            fields_map.price.onchange.apply(this)
+
+            if (this.doc.quantity == undefined) return;
+            fields_map.quantity.onchange.apply(this)
         }
 
         tableControl.grid.fields_map.price.onchange = function (event, value) {
@@ -218,9 +221,9 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         }
 
         tableControl.grid.fields_map.quantity.onchange = async function (event) {
-            console.log("price chnged")
-            if (this.doc.price == undefined) return;
+            console.log("quantity chnged")
 
+            if (this.doc.item_price == undefined) return;
             let uom_whole = await frappe.db.get_value("UOM", this.doc.unit_of_measurement, "must_be_whole_number")
             uom_whole = uom_whole.message.must_be_whole_number
             if (uom_whole == 1) {
@@ -229,6 +232,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 this.doc.rounded_quantity = this.doc.quantity
             }
 
+            if (this.doc.price == undefined) return;
             this.doc.total_price = this.doc.price * this.doc.rounded_quantity
             this.frm.control.work_item_detail_control.refresh()
         }
