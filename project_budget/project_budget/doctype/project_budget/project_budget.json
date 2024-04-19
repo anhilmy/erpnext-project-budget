@@ -16,7 +16,6 @@
  ],
  "fields": [
   {
-   "allow_bulk_edit": 1,
    "fieldname": "project_works",
    "fieldtype": "Table",
    "label": "Project Works",
@@ -60,7 +59,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-04 11:27:46.072864",
+ "modified": "2024-04-17 15:59:02.308673",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Budget",

@@ -3,15 +3,24 @@ projectBudget.ProjectBudgetShow.Controller = class {
         this.wrapper = $(wrapper).find(".layout-main-section");
         this.page = wrapper.page
         this.settings = {}
+
+        this.budget_name = window.location.pathname.split("/").pop()
+        if (this.budget_name == "project-budget-show") {
+            this.budget_name = undefined
+        }
+
         this.make_app()
+
+
     }
 
-    async make_app() {
-        await this.make_new_project()
+    make_app() {
         frappe.run_serially([
-            this.prepare_dom(),
-            this.prepare_components(),
-            this.prepare_menu(),
+            () => this.make_new_project(),
+            () => this.prepare_dom(),
+            () => this.prepare_components(),
+            () => this.prepare_menu(),
+            () => this.load_project()
         ])
     }
 
@@ -26,7 +35,6 @@ projectBudget.ProjectBudgetShow.Controller = class {
     }
 
     prepare_menu() {
-
         this.page.set_secondary_action(__("Recalculate Price"), () => this.refresh_total_cost())
         this.page.set_primary_action(__("Save"), () => this.create_project_budget())
 
@@ -44,24 +52,48 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 work_subtotal += row.total_price
             })
             elem.set_value("total_price", work_subtotal)
-            elem[`total_price_control`].set_value(work_subtotal)
+            elem['control'][`total_price_control`].set_value(work_subtotal)
             total_cost += work_subtotal
-            elem['total_price_control'].refresh()
+            elem['control']['total_price_control'].refresh()
         })
         this.budget_form['project-budget'][`total_estimated_cost_control`].set_value(total_cost)
         this.frm.set_value("total_estimated_cost", total_cost)
         this.budget_form['project-budget']['total_estimated_cost_control'].refresh()
     }
 
-    async create_project_budget() {
+    create_project_budget() {
         let me = this
         me.refresh_total_cost()
+        this.frm.dirty()
         this.frm.save().then(async r => {
-            await me.budget_form['project-works-items'].forEach((elem, index) => {
+            me.budget_form['project-works-items'].forEach((elem, index) => {
                 elem.set_value("project_budget", me.frm.doc.name)
                 elem.save()
             })
         })
+    }
+
+    async load_project() {
+        if (this.budget_name == undefined) return;
+
+        await frappe.db.get_doc("Project Budget", this.budget_name)
+
+        console.log("refreshing");
+        this.frm.refresh(this.budget_name)
+
+        let project_works = await frappe.db.get_list("Project Work", { filters: { project_budget: this.frm.doc.name } })
+
+        let get_work_doc = new Promise((resolve, reject) => {
+            project_works.forEach(async (work, index, array) => {
+                await frappe.db.get_doc("Project Work", work.name)
+                if (index === array.length - 1) resolve();
+            })
+        })
+
+        get_work_doc.then(() => {
+            this.budget_form.refresh_load_project()
+        })
+
     }
 
     make_new_project() {
@@ -106,7 +138,8 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 get_frm: () => this.frm,
                 create_link_task: (works_name) => {
                     console.log(`try to create link to task from works ${works_name}`)
-                }
+                },
+                get_budget_name: () => this.budget_name
             }
         })
     }
