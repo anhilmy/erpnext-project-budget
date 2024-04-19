@@ -68,6 +68,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
         this.frm.save().then(async r => {
             me.budget_form['project-works-items'].forEach((elem, index) => {
                 elem.set_value("project_budget", me.frm.doc.name)
+                elem.dirty()
                 elem.save()
             })
         })
@@ -77,8 +78,6 @@ projectBudget.ProjectBudgetShow.Controller = class {
         if (this.budget_name == undefined) return;
 
         await frappe.db.get_doc("Project Budget", this.budget_name)
-
-        console.log("refreshing");
         this.frm.refresh(this.budget_name)
 
         let project_works = await frappe.db.get_list("Project Work", { filters: { project_budget: this.frm.doc.name } })

@@ -118,17 +118,13 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                     // idk why tablecontrol is the only one connected to form directly
                     // prob because make_meta from building the fields
                     // but if another field using frm parent, then that fields is not going work. 
-
-                    // me.create_field_trigger_child_table(work.fields_dict.work_item_detail, index)
-                    // me.create_field_trigger_child_table(work["control"][`${fieldname}_control`], index)
-                    return
+                    continue
                 }
                 work["control"][`${fieldname}_control`].set_value(work.doc[`${fieldname}`])
                 work["control"][`${fieldname}_control`].refresh()
             }
 
-            me.create_field_trigger_child_table(work["control"][`${fieldname}_control`], index)
-
+            me.create_field_trigger_child_table(work["control"][`work_item_detail_control`], index)
         })
     }
 
@@ -199,45 +195,41 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         // this.doc ==> is a project work detail (already dynamic)
         // this.frm ==> is a project work detail (already dynamic)
 
-        tableControl.grid.fields_map.item_price.onchange = async function (event, value) {
-            let result = await frappe.db.get_value("Item Price", this.doc.item_price, "price_list_rate")
-            this.doc.price = result.message.price_list_rate
-            this.frm.control.work_item_detail_control.refresh()
-            // trigger on change price
-            let fields_map = this.frm.control.work_item_detail_control.grid.fields_map
-            fields_map.price.onchange.apply(this)
 
-            if (this.doc.quantity == undefined) return;
-            fields_map.quantity.onchange.apply(this)
-        }
+        frappe.ui.form.on("Project Work Detail", {
+            item_price: async function (frm, cdt, cdn) {
+                let child_doc = locals[cdt][cdn]
+                let result = await frappe.db.get_value("Item Price", child_doc.item_price, "price_list_rate")
+                frappe.model.set_value(cdt, cdn, "price", result.message.price_list_rate)
+                cur_frm.script_manager.trigger("quantity", "Project Work Detail", cdn)
+                frm.control.work_item_detail_control.refresh()
+            },
+            price: function (frm, cdt, cdn) {
+                let child_doc = locals[cdt][cdn]
+                if (child_doc.quantity == undefined) return;
 
-        tableControl.grid.fields_map.price.onchange = function (event, value) {
-            // this.doc ==> is a project work detail (already dynamic)
-            console.log("price chnged")
-            if (this.doc.quantity == undefined) return;
+                let total_price = child_doc.price * child_doc.rounded_quantity
+                frappe.model.set_value(cdt, cdn, "total_price", total_price)
+                frm.control.work_item_detail_control.refresh()
+            },
+            quantity: async function (frm, cdt, cdn) {
+                console.log("onchange quantity")
+                let child_doc = locals[cdt][cdn]
+                if (!child_doc.price && !child_doc.item_price) return;
 
-            this.doc.total_price = this.doc.price * this.doc.rounded_quantity
-            this.frm.control.work_item_detail_control.refresh()
-        }
+                let uom_whole = await frappe.db.get_value("UOM", child_doc.unit_of_measurement, "must_be_whole_number")
+                uom_whole = uom_whole.message.must_be_whole_number
+                let rounded_quantity = child_doc.quantity
+                if (uom_whole == 1) {
+                    rounded_quantity = Math.ceil(child_doc.quantity)
+                }
+                frappe.model.set_value(cdt, cdn, "rounded_quantity", rounded_quantity)
 
-        tableControl.grid.fields_map.quantity.onchange = async function (event) {
-            console.log("quantity chnged")
-
-            if (this.doc.item_price == undefined) return;
-            let uom_whole = await frappe.db.get_value("UOM", this.doc.unit_of_measurement, "must_be_whole_number")
-            uom_whole = uom_whole.message.must_be_whole_number
-            if (uom_whole == 1) {
-                this.doc.rounded_quantity = Math.ceil(this.doc.quantity)
-            } else {
-                this.doc.rounded_quantity = this.doc.quantity
+                let total_price = child_doc.price * child_doc.rounded_quantity
+                frappe.model.set_value(cdt, cdn, "total_price", total_price)
+                frm.control.work_item_detail_control.refresh()
             }
-
-            if (this.doc.price == undefined) return;
-            this.doc.total_price = this.doc.price * this.doc.rounded_quantity
-            this.frm.control.work_item_detail_control.refresh()
-        }
-
-        console.log("trigger created")
+        })
     }
 
     create_field_filter_child_table(tableControl, index) {
