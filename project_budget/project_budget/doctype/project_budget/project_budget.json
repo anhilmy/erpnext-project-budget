@@ -24,6 +24,7 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Project",
    "options": "Project"
   },
@@ -32,6 +33,7 @@
    "fetch_if_empty": 1,
    "fieldname": "project_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Project Name"
   },
   {
@@ -59,7 +61,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-17 15:59:02.308673",
+ "modified": "2024-04-19 16:00:33.125780",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Budget",
@@ -81,5 +83,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "project_name"
 }

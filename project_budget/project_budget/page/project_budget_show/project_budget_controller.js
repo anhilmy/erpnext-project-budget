@@ -138,7 +138,8 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 create_link_task: (works_name) => {
                     console.log(`try to create link to task from works ${works_name}`)
                 },
-                get_budget_name: () => this.budget_name
+                get_budget_name: () => this.budget_name,
+                get_page: () => this.page,
             }
         })
     }

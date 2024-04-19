@@ -126,6 +126,10 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
             me.create_field_trigger_child_table(work["control"][`work_item_detail_control`], index)
         })
+
+        let doc = frappe.get_doc("Project Budget", this.events.get_budget_name())
+        let title = `${doc.name} - ${doc.project_name}`
+        me.events.get_page().set_title(title)
     }
 
 
