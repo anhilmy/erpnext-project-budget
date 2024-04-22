@@ -66,33 +66,49 @@ projectBudget.ProjectBudgetShow.Controller = class {
         me.refresh_total_cost()
         this.frm.dirty()
         this.frm.save().then(async r => {
-            me.budget_form['project-works-items'].forEach((elem, index) => {
-                elem.set_value("project_budget", me.frm.doc.name)
-                elem.dirty()
-                elem.save()
-            })
+            for (const work of me.budget_form['project-works-items']) {
+                work.set_value("project_budget", me.frm.doc.name)
+                work.dirty()
+                await work.save()
+            }
+
+            this.load_project()
         })
     }
 
     async load_project() {
         if (this.budget_name == undefined) return;
 
+        let me = this
+        this.budget_form.$project_works_index = 0
+
         await frappe.db.get_doc("Project Budget", this.budget_name)
         this.frm.refresh(this.budget_name)
 
-        let project_works = await frappe.db.get_list("Project Work", { filters: { project_budget: this.frm.doc.name } })
+        // get list of project work
+        let project_works = await frappe.db.get_list("Project Work", { filters: { project_budget: this.frm.doc.name, deleted: 0 } })
 
+        // re-get project work in detail (with get_doc) to include child table
+        // using promise to await the get proccess
         let get_work_doc = new Promise((resolve, reject) => {
             project_works.forEach(async (work, index, array) => {
                 await frappe.db.get_doc("Project Work", work.name)
+
                 if (index === array.length - 1) resolve();
+                else me.budget_form.make_project_works_item()
             })
         })
 
         get_work_doc.then(() => {
-            this.budget_form.refresh_load_project()
+            frappe.run_serially([
+                () => this.budget_form.refresh_load_project(),
+                () => {
+                    let doc = this.frm.doc
+                    let title = `${doc.name} - ${doc.project_name}`
+                    this.page.set_title(title)
+                }
+            ])
         })
-
     }
 
     make_new_project() {
@@ -140,6 +156,9 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 },
                 get_budget_name: () => this.budget_name,
                 get_page: () => this.page,
+                delete_budget_work_child: (index) => {
+                    this.frm.fields_dict.project_works.grid.grid_rows[index].remove()
+                }
             }
         })
     }

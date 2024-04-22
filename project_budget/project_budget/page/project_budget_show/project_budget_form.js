@@ -37,20 +37,39 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             <div class="project-works-container">
             </div>
 
-            <div class="add-works-button">Add Project Works</div>
+            <div class="add-works-button btn btn-secondary">Add Project Works</div>
             </div>`
         )
 
         this.$form_container = this.$component.find(".form-container");
         this.$project_works = this.$component.find(".project-works-container")
+        this.$add_works = this.$component.find(".add-works-button")
 
         frappe.run_serially([
             () => this.render_form(),
-            () => this.make_project_works_item()
+            () => this.make_project_works_item(),
+            () => this.create_field_trigger_child_table()
         ])
     }
 
     bind_events() {
+        const me = this;
+
+        this.$component.on("click", ".add-works-button", function () {
+            me.make_project_works_item()
+        })
+
+        this.$project_works.on("click", ".remove-works", function () {
+            let index = $(this).data("index")
+            let frm = me["project-works-items"][index]
+            frm.set_value("deleted", 1)
+            me.$project_works.find(`#project-works-item-${index}`).remove()
+            me.events.delete_budget_work_child(index)
+            frappe.show_alert({
+                message: `Project Work "${frm.doc.work_title}" will be deleted`,
+                indicator: "yellow"
+            })
+        })
 
     }
 
@@ -99,18 +118,29 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         })
     }
 
-    refresh_load_project() {
-        let frm = this.events.get_frm()
-        let me = this
+    async refresh_load_project() {
+        this.refresh_load_project_budget()
+        await this.refresh_load_project_work()
+    }
 
+    refresh_load_project_budget() {
         const budget_fields_to_change = this.get_form_fields("Project Budget")
         budget_fields_to_change.forEach((fieldname, indx) => {
             this["project-budget"][`${fieldname}_control`].set_value(this.events.get_frm().doc[`${fieldname}`])
             this["project-budget"][`${fieldname}_control`].refresh()
         })
+    }
+
+    async refresh_load_project_work() {
+        let frm = this.events.get_frm()
+        let me = this
+
 
         const work_fields_to_change = this.get_form_fields("Project Work")
-        this["project-works-items"].forEach(async (work, index) => {
+
+        for (const [index, work] of this['project-works-items'].entries()) {
+            // for every form in project work items (created empty according to length of Project Work)
+            // assign the empty form with order from Project Budget Work (child table)
             await work.refresh(frm.doc.project_works[index].name)
 
             for (const fieldname of work_fields_to_change) {
@@ -120,27 +150,37 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                     // but if another field using frm parent, then that fields is not going work. 
                     continue
                 }
-                work["control"][`${fieldname}_control`].set_value(work.doc[`${fieldname}`])
+                else if (fieldname == "index") {
+                    // reset the index every time doc is loading
+                    // to control case of deletion 
+                    work["control"][`${fieldname}_control`].set_value(index)
+                } else {
+                    work["control"][`${fieldname}_control`].set_value(work.doc[`${fieldname}`])
+                }
                 work["control"][`${fieldname}_control`].refresh()
             }
+        }
 
-            me.create_field_trigger_child_table(work["control"][`work_item_detail_control`], index)
-        })
-
-        let doc = frappe.get_doc("Project Budget", this.events.get_budget_name())
-        let title = `${doc.name} - ${doc.project_name}`
-        me.events.get_page().set_title(title)
     }
-
 
     async make_project_works_item() {
         let index_work = this.$project_works_index
         this.$project_works.append(
-            `<div class="project-works-item-${index_work}">
-                <h4>Task ${index_work + 1}</h4>
-            </div>`
+            `<div id="project-works-item-${index_work}">
+                <div class="project-works-header"> 
+                    <div class="header-title">
+                        <h4>Task ${index_work + 1}</h4>
+                    </div>
+                    <div class="header-button">
+                        <div class="remove-works btn btn-danger btn-sm" data-index="${index_work}">
+                            <i class="fa fa-trash" aria-hidden="true"></i>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+            <hr>`
         )
-        let project_works_item = this.$project_works.find(`.project-works-item-${index_work}`)
+        let project_works_item = this.$project_works.find(`#project-works-item-${index_work}`)
 
         await this.make_project_work_frm(index_work)
         // if (this[`project-works-items`][index_work]["control"] == undefined) this['project-works-items'][index_work]["control"] = {}
@@ -180,12 +220,13 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 render_input: true,
             });
 
+            // if there are any initial value? idk how this work. its on the example.
             cur_works_control[`${fieldname}_control`].set_value(cur_works_frm.doc[fieldname]);
         })
 
         this.fill_index_work_order(cur_works_frm, index_work)
+        // idk why for filter its need to be applied for every docname 
         this.create_field_filter_child_table(cur_works_control["work_item_detail_control"], index_work)
-        this.create_field_trigger_child_table(cur_works_control["work_item_detail_control"], index_work)
 
         this.$project_works_index++
     }
@@ -195,10 +236,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         frm["control"]["index_control"].set_value(index)
     }
 
-    create_field_trigger_child_table(tableControl, index) {
-        // this.doc ==> is a project work detail (already dynamic)
-        // this.frm ==> is a project work detail (already dynamic)
-
+    create_field_trigger_child_table() {
 
         frappe.ui.form.on("Project Work Detail", {
             item_price: async function (frm, cdt, cdn) {
@@ -217,7 +255,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 frm.control.work_item_detail_control.refresh()
             },
             quantity: async function (frm, cdt, cdn) {
-                console.log("onchange quantity")
                 let child_doc = locals[cdt][cdn]
                 if (!child_doc.price && !child_doc.item_price) return;
 
@@ -237,6 +274,8 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     }
 
     create_field_filter_child_table(tableControl, index) {
+        // idk why for filter its need to be applied from get_query, not using script_manager 
+
         tableControl.grid.get_field("item").get_query = function (doc, dct, cdn) {
             return {
                 filters: {

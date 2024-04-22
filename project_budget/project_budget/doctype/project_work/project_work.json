@@ -9,7 +9,6 @@
  "field_order": [
   "section_break_aowz",
   "project_budget",
-  "index",
   "column_break_mgde",
   "task",
   "create_task_button",
@@ -18,7 +17,10 @@
   "volume",
   "unit_of_measurement",
   "work_item_detail",
-  "total_price"
+  "total_price",
+  "section_break_vmej",
+  "index",
+  "deleted"
  ],
  "fields": [
   {
@@ -92,11 +94,24 @@
   {
    "fieldname": "section_break_eiqq",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_vmej",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "deleted",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "deleted",
+   "print_hide": 1,
+   "report_hide": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-19 13:28:30.980250",
+ "modified": "2024-04-22 14:18:52.799901",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Work",
