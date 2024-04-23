@@ -66,8 +66,9 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     bind_events() {
         const me = this;
 
-        this.$component.on("click", ".add-works-button", function () {
-            me.make_project_works_item()
+        this.$component.on("click", ".add-works-button", async function () {
+            await me.make_project_works_item()
+            me.events.set_default_title()
         })
 
         this.$project_works.on("click", ".remove-works", function () {
@@ -141,7 +142,11 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         let frm = this.events.get_frm()
         let me = this
 
-
+        for (let i = 0; i < this.events.get_frm().doc.project_works.length; i++) {
+            await me.make_project_works_item()
+            this.$project_works_index++
+            this.events.set_default_title()
+        }
         const work_fields_to_change = this.get_form_fields("Project Work")
         for (const [index, work] of this['project-works-items'].entries()) {
             // for every form in project work items (created empty according to length of Project Work)
@@ -236,8 +241,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         this.fill_index_work_order(cur_works_frm, index_work)
         // idk why for filter its need to be applied for every docname 
         this.create_field_filter_child_table(cur_works_control["work_item_detail_control"], index_work)
-
-        this.$project_works_index++
     }
 
     fill_index_work_order(frm, index) {
@@ -304,9 +307,9 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         }
     }
 
-    make_project_work_frm(index) {
+    async make_project_work_frm(index) {
         const doctype = "Project Work"
-        return new Promise((resolve) => {
+        return await new Promise((resolve) => {
             if (this['project-works-items'][index]) {
                 this['project-works-items'][index] = this.get_new_frm(this['project-works-items'][index])
                 resolve()

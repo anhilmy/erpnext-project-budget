@@ -40,7 +40,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
 
         this.page.clear_menu()
         this.page.add_menu_item(__("Open Form View"), () => {
-            frappe.set_route("project-budget", cur_frm.doc.name)
+            frappe.set_route("project-budget", this.frm.doc.name)
         })
         this.page.add_menu_item(__("Show All Project Budget"))
         this.page.add_menu_item(__("Show All Project Template"))
@@ -99,18 +99,13 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 await frappe.db.get_doc("Project Work", work.name)
 
                 if (index === array.length - 1) resolve();
-                else me.budget_form.make_project_works_item()
             })
         })
 
         get_work_doc.then(() => {
             frappe.run_serially([
                 () => this.budget_form.refresh_load_project_work(),
-                () => {
-                    let doc = this.frm.doc
-                    let title = `${doc.name} - ${doc.project_name}`
-                    this.page.set_title(title)
-                }
+                () => this.set_title()
             ])
         })
     }
@@ -121,7 +116,12 @@ projectBudget.ProjectBudgetShow.Controller = class {
             () => this.make_project_budget_frm(),
             () => frappe.dom.unfreeze(),
         ])
+    }
 
+    set_title() {
+        let doc = this.frm.doc
+        let title = `${doc.name} - ${doc.project_name}`
+        this.page.set_title(title)
     }
 
     make_project_budget_frm() {
@@ -158,11 +158,10 @@ projectBudget.ProjectBudgetShow.Controller = class {
                 create_link_task: (works_name) => {
                     console.log(`try to create link to task from works ${works_name}`)
                 },
-                get_budget_name: () => this.budget_name,
-                get_page: () => this.page,
                 delete_budget_work_child: (index) => {
                     this.frm.fields_dict.project_works.grid.grid_rows[index].remove()
-                }
+                },
+                set_default_title: () => this.set_title()
             }
         })
     }
