@@ -72,15 +72,32 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         })
 
         this.$project_works.on("click", ".remove-works", function () {
-            let index = $(this).data("index")
-            let frm = me["project-works-items"][index]
-            frm.set_value("deleted", 1)
-            me.$project_works.find(`#project-works-item-${index}`).remove()
-            me.events.delete_budget_work_child(index)
-            frappe.show_alert({
-                message: `Project Work "${frm.doc.work_title}" will be deleted`,
-                indicator: "yellow"
+            const d = new frappe.ui.Dialog({
+                title: "Deletion Confirmation",
+                primary_action_label: "Delete",
+                secondary_action_label: "Cancel",
+                primary_action: () => {
+                    debugger
+                    let index = $(this).data("index")
+                    let frm = me["project-works-items"][index]
+                    frm.set_value("deleted", 1)
+                    me.$project_works.find(`#project-works-item-${index}`).remove()
+                    me.events.delete_budget_work_child(index)
+                    frappe.show_alert({
+                        message: `Project Work "${frm.doc.work_title}" will be deleted after you save the document`,
+                        indicator: "yellow"
+                    })
+                    d.hide()
+                },
+                secondary_action: () => {
+                    d.hide()
+                }
             })
+
+            d.$body.append(`<div class="frappe-confirm-message">Are you sure you want to delete this task?</div>`)
+            d.standard_actions.find(".btn-primary").removeClass("btn-primary").addClass("btn-danger");
+
+            d.show()
         })
 
     }
