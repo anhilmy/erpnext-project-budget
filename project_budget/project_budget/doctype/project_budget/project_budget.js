@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Project Budget", {
     refresh(frm) {
-        frm.add_custom_button("Detail", function () {
+        frm.add_custom_button("Show Detail", function () {
             frappe.set_route("project-budget-show", frm.doc.name)
         })
     },

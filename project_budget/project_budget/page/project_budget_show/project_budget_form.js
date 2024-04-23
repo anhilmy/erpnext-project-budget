@@ -32,7 +32,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             </div>
             <div class="project-works-container-outer">
             <div>
-                <h3>List of Task</h3>
+                <h2>List of Task</h2>
             </div>
             <div class="project-works-container">
             </div>
@@ -47,10 +47,21 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
         frappe.run_serially([
             () => this.render_form(),
-            () => this.make_project_works_item(),
+            () => this.project_works_item_placeholder(),
             () => this.create_field_trigger_child_table()
         ])
     }
+
+
+    project_works_item_placeholder() {
+        this.$project_works.append(
+            `<div id="project-works-item-placeholder">
+                <h3>No Project Task yet</h3>
+
+            </div>`
+        )
+    }
+
 
     bind_events() {
         const me = this;
@@ -118,11 +129,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         })
     }
 
-    async refresh_load_project() {
-        this.refresh_load_project_budget()
-        await this.refresh_load_project_work()
-    }
-
     refresh_load_project_budget() {
         const budget_fields_to_change = this.get_form_fields("Project Budget")
         budget_fields_to_change.forEach((fieldname, indx) => {
@@ -137,7 +143,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
 
         const work_fields_to_change = this.get_form_fields("Project Work")
-
         for (const [index, work] of this['project-works-items'].entries()) {
             // for every form in project work items (created empty according to length of Project Work)
             // assign the empty form with order from Project Budget Work (child table)
@@ -165,6 +170,10 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
     async make_project_works_item() {
         let index_work = this.$project_works_index
+        if (index_work == 0) {
+            this.$project_works.html("")
+        }
+
         this.$project_works.append(
             `<div id="project-works-item-${index_work}">
                 <div class="project-works-header"> 

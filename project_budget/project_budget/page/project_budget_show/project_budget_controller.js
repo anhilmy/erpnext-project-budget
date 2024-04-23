@@ -39,7 +39,9 @@ projectBudget.ProjectBudgetShow.Controller = class {
         this.page.set_primary_action(__("Save"), () => this.create_project_budget())
 
         this.page.clear_menu()
-        this.page.add_menu_item(__("Open Form View"))
+        this.page.add_menu_item(__("Open Form View"), () => {
+            frappe.set_route("project-budget", this.frm.name)
+        })
         this.page.add_menu_item(__("Show All Project Budget"))
         this.page.add_menu_item(__("Show All Project Template"))
     }
@@ -84,6 +86,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
 
         await frappe.db.get_doc("Project Budget", this.budget_name)
         this.frm.refresh(this.budget_name)
+        this.budget_form.refresh_load_project_budget()
 
         // get list of project work
         let project_works = await frappe.db.get_list("Project Work", { filters: { project_budget: this.frm.doc.name, deleted: 0 } })
@@ -91,6 +94,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
         // re-get project work in detail (with get_doc) to include child table
         // using promise to await the get proccess
         let get_work_doc = new Promise((resolve, reject) => {
+            if (project_works.length == 0) resolve()
             project_works.forEach(async (work, index, array) => {
                 await frappe.db.get_doc("Project Work", work.name)
 
@@ -101,7 +105,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
 
         get_work_doc.then(() => {
             frappe.run_serially([
-                () => this.budget_form.refresh_load_project(),
+                () => this.budget_form.refresh_load_project_work(),
                 () => {
                     let doc = this.frm.doc
                     let title = `${doc.name} - ${doc.project_name}`
