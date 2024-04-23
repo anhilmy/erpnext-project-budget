@@ -40,7 +40,7 @@ projectBudget.ProjectBudgetShow.Controller = class {
 
         this.page.clear_menu()
         this.page.add_menu_item(__("Open Form View"), () => {
-            frappe.set_route("project-budget", this.frm.name)
+            frappe.set_route("project-budget", cur_frm.doc.name)
         })
         this.page.add_menu_item(__("Show All Project Budget"))
         this.page.add_menu_item(__("Show All Project Template"))
