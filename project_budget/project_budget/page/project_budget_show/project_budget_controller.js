@@ -69,6 +69,14 @@ projectBudget.ProjectBudgetShow.Controller = class {
         this.frm.dirty()
         this.frm.save().then(async r => {
             for (const work of me.budget_form['project-works-items']) {
+                if (work['task_frm']) {
+                    work['task_frm'].set_value("project", me.frm.doc.project)
+                    await work['task_frm'].save()
+                    work.set_value("task", work['task_frm'].doc.name)
+                } else {
+                    work.set_value("task", "")
+                }
+
                 work.set_value("project_budget", me.frm.doc.name)
                 work.dirty()
                 await work.save()
@@ -155,9 +163,6 @@ projectBudget.ProjectBudgetShow.Controller = class {
             settings: this.settings,
             events: {
                 get_frm: () => this.frm,
-                create_link_task: (works_name) => {
-                    console.log(`try to create link to task from works ${works_name}`)
-                },
                 delete_budget_work_child: (index) => {
                     this.frm.fields_dict.project_works.grid.grid_rows[index].remove()
                 },

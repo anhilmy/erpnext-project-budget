@@ -130,9 +130,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
             let $show_task_btn = $(this).parent().find(".show-task")
             $show_task_btn.removeClass("show-task").addClass("link-task").text("Link to Task").removeData("is-open")
-            console.log('deleting task form')
-            console.log(work_frm['task_frm'])
-            console.log(work_frm.doc.task)
         })
 
     }
@@ -251,32 +248,25 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         let wrapper = this.$project_works.find(`#project-works-item-${index}`).find(".task-form")
         let is_task_html_loaded = $(wrapper).find("#is-loaded")
         if (!is_task_html_loaded.length) {
-            console.log("task is not loaded yet")
             // if the form is not html loaded and not opened yet
             let work_frm = this['project-works-items'][index]
             let is_create = work_frm.doc.task ? false : true
 
-            $(wrapper).css("display", "block")
-            console.log("display changed to block")
-            console.log(wrapper)
 
             frappe.run_serially([
                 () => this.load_create_task(index, is_create),
                 () => this.make_task_form_html(wrapper, index),
                 () => this.load_task_form(work_frm.task_frm)
             ])
+            $(wrapper).css("display", "block")
 
 
 
         } else {
-            console.log("task is already loaded")
             let task_html = wrapper
             if (is_open) {
-                console.log("hiding task")
-
                 $(task_html).css("display", "none")
             } else {
-                console.log("showing task")
                 $(task_html).css("display", "block")
             }
         }
@@ -297,20 +287,16 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
         // if not create then fill empty frm with 
         if (!is_create) {
-            console.log("opening existing task")
             let task_name = this['project-works-items'][index].doc.task
             let task = await frappe.db.get_doc("Task", task_name)
             let task_frm = this['project-works-items'][index]["task_frm"]
             await task_frm.refresh(task)
             this.events.set_default_title()
-        } else {
-            console.log("creating new task")
         }
 
     }
 
     async make_task_form_html(wrapper, index) {
-        console.log("generating html")
         wrapper.html("")
         if (this.task_meta == undefined) this.task_meta = await frappe.get_meta("Task")
 
@@ -440,12 +426,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
 
     create_field_trigger_child_table() {
         let me = this
-        frappe.ui.form.on("Project Work", {
-            link: function (frm) {
-                console.log("task created")
-            }
-        })
-
 
         frappe.ui.form.on("Project Work Detail", {
             item_price: async function (frm, cdt, cdn) {
