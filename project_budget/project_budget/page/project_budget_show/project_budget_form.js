@@ -32,7 +32,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             </div>
             <div class="project-works-container-outer">
             <div>
-                <h2>List of Task</h2>
+                <h2>List of Work</h2>
             </div>
             <div class="project-works-container">
             </div>
@@ -56,8 +56,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     project_works_item_placeholder() {
         this.$project_works.append(
             `<div id="project-works-item-placeholder">
-                <h3>No Project Task yet</h3>
-
+                <h3>No Project Work yet</h3>
             </div>`
         )
     }
@@ -77,7 +76,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 primary_action_label: "Delete",
                 secondary_action_label: "Cancel",
                 primary_action: () => {
-                    debugger
                     let index = $(this).data("index")
                     let frm = me["project-works-items"][index]
                     frm.set_value("deleted", 1)
@@ -94,10 +92,47 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 }
             })
 
-            d.$body.append(`<div class="frappe-confirm-message">Are you sure you want to delete this task?</div>`)
+            d.$body.append(`<div class="frappe-confirm-message">Are you sure you want to delete this work?</div>`)
             d.standard_actions.find(".btn-primary").removeClass("btn-primary").addClass("btn-danger");
 
             d.show()
+        })
+
+
+        this.$project_works.on("click", ".link-task", function () {
+            let index = $(this).data("index")
+            $(this).removeClass("link-task").addClass("show-task").text("Hide Task").data("is-open", true)
+            me.toggle_show_task(index, true)
+            $(this).parent().find(".delete-task").css("display", "")
+        })
+
+        this.$project_works.on("click", ".show-task", function () {
+            let index = $(this).data("index")
+            let is_open = $(this).data("is-open")
+
+            if (is_open) {
+                $(this).text("Show Task").data("is-open", false)
+            } else {
+                $(this).text("Hide Task").data("is-open", true)
+            }
+
+            me.toggle_show_task(index, is_open)
+        })
+
+        this.$project_works.on("click", ".delete-task", function () {
+            let index = $(this).data("index")
+            let work_frm = me['project-works-items'][index]
+            delete work_frm["task_frm"]
+            delete work_frm.doc["task"]
+            me.$project_works.find(`#project-works-item-${index}`).find(".task-form").html("")
+
+            $(this).css("display", "none")
+
+            let $show_task_btn = $(this).parent().find(".show-task")
+            $show_task_btn.removeClass("show-task").addClass("link-task").text("Link to Task").removeData("is-open")
+            console.log('deleting task form')
+            console.log(work_frm['task_frm'])
+            console.log(work_frm.doc.task)
         })
 
     }
@@ -181,14 +216,139 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                     // reset the index every time doc is loading
                     // to control case of deletion 
                     work["control"][`${fieldname}_control`].set_value(index)
+                } else if (fieldname == "task") {
+                    let $project_works_item = this.$project_works.find(`#project-works-item-${index}`)
+                    work["control"][`${fieldname}_control`].set_value(work.doc[fieldname])
+                    if (work.doc[fieldname]) {
+                        let $task_button = $project_works_item.find(".link-task")
+                        $task_button.removeClass("link-task").addClass("show-task").text("Show Task").data("is-open", false)
+                    } else {
+                        let $delete_task_button = $project_works_item.find(".delete-task")
+                        $delete_task_button.css("display", "none")
+                    }
                 } else {
-                    work["control"][`${fieldname}_control`].set_value(work.doc[`${fieldname}`])
+                    work["control"][`${fieldname}_control`].set_value(work.doc[fieldname])
                 }
                 work["control"][`${fieldname}_control`].refresh()
             }
         }
+    }
+
+    async load_task_form(frm) {
+        const field_to_display = this.get_form_fields("Task")
+        for (const fieldname of field_to_display) {
+            if (fieldname == "depends_on") {
+                continue
+            }
+            frm["control"][`${fieldname}_control`].set_value(frm.doc[fieldname])
+            frm["control"][`${fieldname}_control`].refresh()
+        }
+
 
     }
+
+    async toggle_show_task(index, is_open) {
+        let wrapper = this.$project_works.find(`#project-works-item-${index}`).find(".task-form")
+        let is_task_html_loaded = $(wrapper).find("#is-loaded")
+        if (!is_task_html_loaded.length) {
+            console.log("task is not loaded yet")
+            // if the form is not html loaded and not opened yet
+            let work_frm = this['project-works-items'][index]
+            let is_create = work_frm.doc.task ? false : true
+
+            $(wrapper).css("display", "block")
+            console.log("display changed to block")
+            console.log(wrapper)
+
+            frappe.run_serially([
+                () => this.load_create_task(index, is_create),
+                () => this.make_task_form_html(wrapper, index),
+                () => this.load_task_form(work_frm.task_frm)
+            ])
+
+
+
+        } else {
+            console.log("task is already loaded")
+            let task_html = wrapper
+            if (is_open) {
+                console.log("hiding task")
+
+                $(task_html).css("display", "none")
+            } else {
+                console.log("showing task")
+                $(task_html).css("display", "block")
+            }
+        }
+    }
+
+    async load_create_task(index, is_create) {
+        // if show task then is_create is false
+        // if link to task then is_create is true
+
+        // check if this index already filled with task frm
+        if (this['project-works-items'][index]['task_frm']) {
+            // if there are frm. high likely there are not needed to load or create task
+            // just re-create the form 
+            return
+        }
+
+        await this.make_task_work_frm(index)
+
+        // if not create then fill empty frm with 
+        if (!is_create) {
+            console.log("opening existing task")
+            let task_name = this['project-works-items'][index].doc.task
+            let task = await frappe.db.get_doc("Task", task_name)
+            let task_frm = this['project-works-items'][index]["task_frm"]
+            await task_frm.refresh(task)
+            this.events.set_default_title()
+        } else {
+            console.log("creating new task")
+        }
+
+    }
+
+    async make_task_form_html(wrapper, index) {
+        console.log("generating html")
+        wrapper.html("")
+        if (this.task_meta == undefined) this.task_meta = await frappe.get_meta("Task")
+
+        let cur_task_frm = this['project-works-items'][index]['task_frm']
+        cur_task_frm['control'] = {}
+        let cur_control = cur_task_frm['control']
+        const field_to_display = this.get_form_fields("Task")
+        for (const fieldname of field_to_display) {
+            wrapper.append(
+                `<div class='${fieldname}-control' data-fieldname='${fieldname}' data-workindex="${index}"></div>`
+            )
+
+            const field_meta = this.task_meta.fields.find((df) => df.fieldname == fieldname);
+
+            let control_meta = []
+            if (field_meta.fieldtype == "Table") {
+                field_meta.data = [];
+                control_meta.frm = cur_task_frm
+            }
+
+            cur_control[`${fieldname}_control`] = frappe.ui.form.make_control({
+                df: {
+                    ...field_meta,
+                    onchange: function () {
+                        let value = cur_control[`${fieldname}_control`].get_value();
+                        cur_task_frm.set_value(fieldname, value);
+                    }
+                },
+                ...control_meta,
+                parent: wrapper.find(`.${fieldname}-control`),
+                render_input: true,
+            })
+            cur_control[`${fieldname}_control`].set_value(cur_task_frm.doc[fieldname])
+        }
+        wrapper.append(`<hr id="is-loaded"></hr>`)
+    }
+
+
 
     async make_project_works_item() {
         let index_work = this.$project_works_index
@@ -200,21 +360,30 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             `<div id="project-works-item-${index_work}">
                 <div class="project-works-header"> 
                     <div class="header-title">
-                        <h4>Task ${index_work + 1}</h4>
+                        <h4>Work ${index_work + 1}</h4>
                     </div>
                     <div class="header-button">
+                        <div class="link-task btn btn-secondary btn-sm" data-index="${index_work}">
+                            Link to Task
+                        </div>
+                        <div class="delete-task btn btn-secondary btn-sm" data-index="${index_work}">
+                            Delete Task
+                        </div>
                         <div class="remove-works btn btn-danger btn-sm" data-index="${index_work}">
                             <i class="fa fa-trash" aria-hidden="true"></i>
                         </div>
                     </div>    
                 </div>
+                <div class="task-form">
+                </div>
+                <div class="project-works-body">
+                </div>
             </div>
             <hr>`
         )
-        let project_works_item = this.$project_works.find(`#project-works-item-${index_work}`)
+        let project_works_item = this.$project_works.find(`#project-works-item-${index_work}`).find('.project-works-body')
 
         await this.make_project_work_frm(index_work)
-        // if (this[`project-works-items`][index_work]["control"] == undefined) this['project-works-items'][index_work]["control"] = {}
 
         if (this.work_meta == undefined) this.work_meta = await frappe.get_meta("Project Work")
 
@@ -236,6 +405,10 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 field_meta.fields = this.get_table_fields(fieldname);
                 field_meta.data = [];
                 make_meta["frm"] = cur_works_frm;
+            }
+
+            if (fieldname == "task") {
+                field_meta.hidden = 1
             }
 
             cur_works_control[`${fieldname}_control`] = frappe.ui.form.make_control({
@@ -266,6 +439,13 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     }
 
     create_field_trigger_child_table() {
+        let me = this
+        frappe.ui.form.on("Project Work", {
+            link: function (frm) {
+                console.log("task created")
+            }
+        })
+
 
         frappe.ui.form.on("Project Work Detail", {
             item_price: async function (frm, cdt, cdn) {
@@ -324,23 +504,38 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         }
     }
 
-    async make_project_work_frm(index) {
-        const doctype = "Project Work"
+    async make_task_work_frm(index) {
+        const doctype = "Task"
+        let doc_frm = this["project-works-items"][index]
         return await new Promise((resolve) => {
-            if (this['project-works-items'][index]) {
-                this['project-works-items'][index] = this.get_new_frm(this['project-works-items'][index])
+            if (doc_frm["task_frm"]) {
+                doc_frm["task_frm"] = this.get_new_frm(doctype, doc_frm["task_frm"])
                 resolve()
             } else {
                 frappe.model.with_doctype(doctype, () => {
-                    this['project-works-items'][index] = this.get_new_frm()
+                    doc_frm["task_frm"] = this.get_new_frm(doctype)
                     resolve()
                 })
             }
         })
     }
 
-    get_new_frm(_frm) {
+    async make_project_work_frm(index) {
         const doctype = "Project Work"
+        return await new Promise((resolve) => {
+            if (this['project-works-items'][index]) {
+                this['project-works-items'][index] = this.get_new_frm(doctype, this['project-works-items'][index])
+                resolve()
+            } else {
+                frappe.model.with_doctype(doctype, () => {
+                    this['project-works-items'][index] = this.get_new_frm(doctype)
+                    resolve()
+                })
+            }
+        })
+    }
+
+    get_new_frm(doctype, _frm) {
         const page = $("<div>")
         const frm = _frm || new frappe.ui.form.Form(doctype, page, false)
         const name = frappe.model.make_new_doc_and_get_name(doctype, false)
@@ -407,7 +602,28 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 "unit_of_measurement",
                 "work_item_detail",
                 "total_price",
-                "index"
+                "index",
+                "task"
+            ]
+        else if (doctype == "Task")
+            fields = [
+                "subject",
+                "issue",
+                "color",
+                "status",
+                "priority",
+                "task_weight",
+                "parent_task",
+                "completed_by",
+                "completed_on",
+                "exp_start_date",
+                "expected_time",
+                "exp_end_date",
+                "progress",
+                "duration",
+                "is_milestone",
+                "description",
+                "depends_on"
             ]
 
         return fields
