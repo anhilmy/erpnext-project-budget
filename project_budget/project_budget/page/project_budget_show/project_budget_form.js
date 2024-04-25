@@ -439,7 +439,10 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             });
 
             // if there are any initial value? idk how this work. its on the example.
-            cur_works_control[`${fieldname}_control`].set_value(cur_works_frm.doc[fieldname]);
+            if (fieldname != "work_item_detail") {
+                // so work item detail is not deleted in get_doc locals
+                cur_works_control[`${fieldname}_control`].set_value(cur_works_frm.doc[fieldname]);
+            }
         })
 
         this.fill_index_work_order(cur_works_frm, index_work)
