@@ -6,6 +6,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         this.$project_works_index = 0
         this['project-works-items'] = []
         this['project-budget'] = {}
+        this['project-budget']['deleted-task'] = []
 
         this.init_component()
     }
@@ -120,16 +121,43 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         })
 
         this.$project_works.on("click", ".delete-task", function () {
-            let index = $(this).data("index")
-            let work_frm = me['project-works-items'][index]
-            delete work_frm["task_frm"]
-            delete work_frm.doc["task"]
-            me.$project_works.find(`#project-works-item-${index}`).find(".task-form").html("")
 
-            $(this).css("display", "none")
+            const d = new frappe.ui.Dialog({
+                title: "Deletion Confirmation",
+                primary_action_label: "Delete",
+                secondary_action_label: "Cancel",
+                primary_action: () => {
 
-            let $show_task_btn = $(this).parent().find(".show-task")
-            $show_task_btn.removeClass("show-task").addClass("link-task").text("Link to Task").removeData("is-open")
+                    let index = $(this).data("index")
+                    let work_frm = me['project-works-items'][index]
+                    me['project-budget']['deleted-task'].push(work_frm.doc['task'])
+
+
+                    delete work_frm["task_frm"]
+                    delete work_frm.doc["task"]
+                    work_frm.control.task_is_deleted = true
+                    me.$project_works.find(`#project-works-item-${index}`).find(".task-form").html("")
+
+                    $(this).css("display", "none")
+
+                    let $show_task_btn = $(this).parent().find(".show-task")
+                    $show_task_btn.removeClass("show-task").addClass("link-task").text("Link to Task").removeData("is-open")
+
+                    frappe.show_alert({
+                        message: `Task of "${work_frm.doc.work_title}" will be deleted after you save the document`,
+                        indicator: "yellow"
+                    })
+                    d.hide()
+                },
+                secondary_action: () => {
+                    d.hide()
+                }
+            })
+
+            d.$body.append(`<div class="frappe-confirm-message">Are you sure you want to delete this task?</div>`)
+            d.standard_actions.find(".btn-primary").removeClass("btn-primary").addClass("btn-danger");
+
+            d.show()
         })
 
     }

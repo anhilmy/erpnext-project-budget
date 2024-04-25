@@ -69,17 +69,21 @@ projectBudget.ProjectBudgetShow.Controller = class {
         this.frm.dirty()
         this.frm.save().then(async r => {
             for (const work of me.budget_form['project-works-items']) {
-                if (work['task_frm']) {
+                if (work.doc["task"] && work['task_frm']) {
+                    // if work have a task, and task is opened (it will assume task is edited)
+                    // if work connect to a new task is auto filled doc['task'] from when creating new task form
                     work['task_frm'].set_value("project", me.frm.doc.project)
                     await work['task_frm'].save()
                     work.set_value("task", work['task_frm'].doc.name)
-                } else {
-                    work.set_value("task", "")
                 }
 
                 work.set_value("project_budget", me.frm.doc.name)
                 work.dirty()
                 await work.save()
+            }
+
+            for (const deleted_task of me.budget_form['project-budget']['deleted-task']) {
+                frappe.db.delete_doc("Task", deleted_task)
             }
 
             this.load_project()
