@@ -9,6 +9,7 @@
   "item",
   "item_price",
   "type",
+  "unit_of_measurement",
   "price",
   "quantity",
   "rounded_quantity",
@@ -73,12 +74,18 @@
    "in_list_view": 1,
    "label": "Rounded Quantity",
    "read_only": 1
+  },
+  {
+   "fieldname": "unit_of_measurement",
+   "fieldtype": "Data",
+   "label": "Unit of Measurement",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-19 13:01:41.904914",
+ "modified": "2024-04-25 15:37:19.409505",
  "modified_by": "Administrator",
  "module": "Project Budget",
  "name": "Project Work Detail",

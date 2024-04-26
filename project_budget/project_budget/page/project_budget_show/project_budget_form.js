@@ -279,16 +279,12 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
             // if the form is not html loaded and not opened yet
             let work_frm = this['project-works-items'][index]
             let is_create = work_frm.doc.task ? false : true
-
-
             frappe.run_serially([
                 () => this.load_create_task(index, is_create),
                 () => this.make_task_form_html(wrapper, index),
                 () => this.load_task_form(work_frm.task_frm)
             ])
             $(wrapper).css("display", "block")
-
-
 
         } else {
             let task_html = wrapper
@@ -408,7 +404,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
         let cur_works_control = cur_works_frm["control"]
 
         const field_to_display = this.get_form_fields("Project Work")
-        field_to_display.forEach((fieldname, index_detail) => {
+        for (const fieldname of field_to_display) {
             project_works_item.append(
                 `<div class='${fieldname}-control' data-fieldname='${fieldname}' data-workindex="${index_work}"></div>`
             );
@@ -445,7 +441,7 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 // so work item detail is not deleted in get_doc locals
                 cur_works_control[`${fieldname}_control`].set_value(cur_works_frm.doc[fieldname]);
             }
-        })
+        }
 
         this.fill_index_work_order(cur_works_frm, index_work)
         // idk why for filter its need to be applied for every docname 
@@ -458,8 +454,6 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
     }
 
     create_field_trigger_child_table() {
-        let me = this
-
         frappe.ui.form.on("Project Work Detail", {
             item_price: async function (frm, cdt, cdn) {
                 let child_doc = locals[cdt][cdn]
