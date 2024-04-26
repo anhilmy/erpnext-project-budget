@@ -357,7 +357,9 @@ projectBudget.ProjectBudgetShow.BudgetForm = class {
                 parent: wrapper.find(`.${fieldname}-control`),
                 render_input: true,
             })
-            cur_control[`${fieldname}_control`].set_value(cur_task_frm.doc[fieldname])
+            if (fieldname != "depends_on") {
+                cur_control[`${fieldname}_control`].set_value(cur_task_frm.doc[fieldname])
+            }
         }
         wrapper.append(`<hr id="is-loaded"></hr>`)
     }
